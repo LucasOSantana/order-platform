@@ -17,7 +17,7 @@ FROM nginx:1.27-alpine
 COPY nginx/default.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist/frontend/browser /usr/share/nginx/html
 
-ENV BACKEND_URL=http://backend:8080
+ENV BACKEND_URL=http://backend:4040
 EXPOSE 80
 
 HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=5 \

@@ -28,9 +28,9 @@ COPY --from=build /workspace/extracted/snapshot-dependencies/ ./
 COPY --from=build /workspace/extracted/application/ ./
 
 ENV JAVA_OPTS="-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError"
-EXPOSE 8080
+EXPOSE 4040
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=40s --retries=10 \
-    CMD wget -qO- http://localhost:8080/actuator/health | grep -q '"status":"UP"' || exit 1
+    CMD wget -qO- http://localhost:4040/actuator/health | grep -q '"status":"UP"' || exit 1
 
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS org.springframework.boot.loader.launch.JarLauncher"]
