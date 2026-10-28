@@ -61,7 +61,7 @@ export class OrderDetailPage {
   private readonly reload$ = new BehaviorSubject<void>(undefined);
 
   constructor() {
-    //Pooling para status enquanto não for concluído ou erro
+    //Pooling para status enquanto não for concluído ou falhar
     combineLatest([toObservable(this.id), this.reload$])
       .pipe(
         switchMap(([id]) => {

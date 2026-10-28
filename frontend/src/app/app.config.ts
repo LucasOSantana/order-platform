@@ -9,8 +9,7 @@ import {
 } from '@angular/core';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { routes } from './app.routes';
-import { MockOrdersApi } from './features/orders/data-access/mock/mock-orders-api';
-import { OrdersApi } from './features/orders/data-access/orders-api';
+import { provideOrdersApi } from './features/orders/data-access/provide-orders-api';
 
 registerLocaleData(localePt);
 
@@ -21,7 +20,6 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withFetch()),
     { provide: LOCALE_ID, useValue: 'pt-BR' },
     { provide: DEFAULT_CURRENCY_CODE, useValue: 'BRL' },
-    // Dados simulados enquanto o backend não expõe /api/orders.
-    { provide: OrdersApi, useClass: MockOrdersApi },
+    provideOrdersApi('http'),
   ],
 };
