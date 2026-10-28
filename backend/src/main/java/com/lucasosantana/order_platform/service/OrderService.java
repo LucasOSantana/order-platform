@@ -6,6 +6,8 @@ import java.time.ZoneId;
 import java.util.List;
 import java.util.UUID;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -14,12 +16,16 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.lucasosantana.order_platform.dto.CreateOrderRequest;
 import com.lucasosantana.order_platform.dto.OrderFilter;
 import com.lucasosantana.order_platform.dto.OrderResponse;
 import com.lucasosantana.order_platform.dto.OrderSummaryResponse;
 import com.lucasosantana.order_platform.exception.InvalidRequestException;
 import com.lucasosantana.order_platform.exception.OrderNotFoundException;
 import com.lucasosantana.order_platform.mapper.OrderMapper;
+import com.lucasosantana.order_platform.model.Order;
+import com.lucasosantana.order_platform.model.OrderOutbox;
+import com.lucasosantana.order_platform.repository.OrderOutboxRepository;
 import com.lucasosantana.order_platform.repository.OrderRepository;
 import com.lucasosantana.order_platform.repository.OrderSpecifications;
 
@@ -29,15 +35,20 @@ public class OrderService {
 
 	static final List<String> SORTABLE_FIELDS = List.of("createdAt", "customerName", "status", "totalAmount");
 
+	private static final Logger log = LoggerFactory.getLogger(OrderService.class);
+
 	private final OrderRepository orderRepository;
+	private final OrderOutboxRepository outboxRepository;
 	private final OrderMapper orderMapper;
 	private final ZoneId zoneId;
 
 	public OrderService(
 			OrderRepository orderRepository,
+			OrderOutboxRepository outboxRepository,
 			OrderMapper orderMapper,
 			@Value("${app.time-zone}") ZoneId zoneId) {
 		this.orderRepository = orderRepository;
+		this.outboxRepository = outboxRepository;
 		this.orderMapper = orderMapper;
 		this.zoneId = zoneId;
 	}
@@ -54,6 +65,28 @@ public class OrderService {
 
 		return orderRepository.findAll(specification, withStableSort(pageable))
 				.map(orderMapper::toSummary);
+	}
+
+	@Transactional
+	public OrderResponse create(CreateOrderRequest request) {
+		var now = Instant.now();
+		var order = Order.receive(
+						request.customerName().trim(), 
+						request.customerEmail().trim(), 
+						now
+					);
+		request.items().forEach(item -> order.addItem(
+						item.description().trim(),
+						item.quantity(),
+						item.unitPrice())
+					);
+
+		orderRepository.save(order);
+		outboxRepository.save(new OrderOutbox(order.getId(), now));
+
+		log.info("Pedido {} recebido: {} itens, total {}", order.getId(), order.getItems().size(),
+				order.getTotalAmount());
+		return orderMapper.toResponse(order);
 	}
 
 	public OrderResponse getById(UUID id) {

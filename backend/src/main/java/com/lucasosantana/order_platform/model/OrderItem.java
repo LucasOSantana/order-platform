@@ -1,6 +1,7 @@
 package com.lucasosantana.order_platform.model;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -40,5 +41,13 @@ public class OrderItem {
 
 	@Column(name = "line_total", nullable = false, precision = 14, scale = 2)
 	private BigDecimal lineTotal;
+
+	OrderItem(Order order, String description, int quantity, BigDecimal unitPrice) {
+		this.order = order;
+		this.description = description;
+		this.quantity = quantity;
+		this.unitPrice = unitPrice.setScale(2, RoundingMode.HALF_UP);
+		this.lineTotal = this.unitPrice.multiply(BigDecimal.valueOf(quantity));
+	}
 
 }

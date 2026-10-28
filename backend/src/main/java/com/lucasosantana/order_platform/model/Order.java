@@ -8,10 +8,13 @@ import java.util.UUID;
 
 import org.hibernate.annotations.Formula;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
@@ -28,6 +31,7 @@ import lombok.NoArgsConstructor;
 public class Order {
 
 	@Id
+	@GeneratedValue(strategy = GenerationType.UUID)
 	private UUID id;
 
 	@Column(name = "customer_name", nullable = false, length = 150)
@@ -65,12 +69,31 @@ public class Order {
 	@Formula("(select count(*) from order_items oi where oi.order_id = id)")
 	private int itemCount;
 
-	@OneToMany(mappedBy = "order")
+	@OneToMany(mappedBy = "order", cascade = CascadeType.PERSIST)
 	@OrderBy("id")
 	private List<OrderItem> items = new ArrayList<>();
 
-	@OneToMany(mappedBy = "order")
+	@OneToMany(mappedBy = "order", cascade = CascadeType.PERSIST)
 	@OrderBy("createdAt, id")
 	private List<OrderStatusHistory> statusHistory = new ArrayList<>();
+
+	public static Order receive(String customerName, String customerEmail, Instant now) {
+		var order = new Order();
+		order.customerName = customerName;
+		order.customerEmail = customerEmail;
+		order.status = OrderStatus.RECEIVED;
+		order.totalAmount = BigDecimal.ZERO.setScale(2);
+		order.createdAt = now;
+		order.updatedAt = now;
+		order.statusHistory.add(new OrderStatusHistory(order, null, OrderStatus.RECEIVED, null, now));
+		return order;
+	}
+
+	public void addItem(String description, int quantity, BigDecimal unitPrice) {
+		var item = new OrderItem(this, description, quantity, unitPrice);
+		items.add(item);
+		totalAmount = totalAmount.add(item.getLineTotal());
+		itemCount = items.size();
+	}
 
 }

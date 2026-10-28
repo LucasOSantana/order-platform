@@ -45,4 +45,12 @@ public class OrderStatusHistory {
 	@Column(name = "created_at", nullable = false)
 	private Instant createdAt;
 
+	OrderStatusHistory(Order order, OrderStatus fromStatus, OrderStatus toStatus, String reason, Instant createdAt) {
+		this.order = order;
+		this.fromStatus = fromStatus;
+		this.toStatus = toStatus;
+		this.reason = reason;
+		this.createdAt = createdAt;
+	}
+
 }
