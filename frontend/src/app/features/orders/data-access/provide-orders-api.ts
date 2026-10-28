@@ -1,5 +1,5 @@
 import { Provider } from '@angular/core';
-import { OrdersHttpApi } from './http/orders-http-api';
+import { OrdersHttpApi } from './http/orders';
 import { MockOrdersApi } from './mock/mock-orders-api';
 import { OrdersApi } from './orders-api';
 
