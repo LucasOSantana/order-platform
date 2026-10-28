@@ -1,0 +1,157 @@
+<form class="order-form" [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <fieldset class="card form-section">
+    <legend class="form-section__title">Dados do cliente</legend>
+
+    <div class="form-grid">
+      <div class="field">
+        <label class="field__label" for="customerName">Nome do cliente</label>
+        <input
+          id="customerName"
+          class="field__input"
+          type="text"
+          formControlName="customerName"
+          autocomplete="name"
+          [attr.aria-invalid]="showError(form.controls.customerName)"
+          [attr.aria-describedby]="
+            showError(form.controls.customerName) ? 'customerName-error' : null
+          "
+        />
+        @if (showError(form.controls.customerName)) {
+          <span class="field__error" id="customerName-error">
+            {{ errorMessage(form.controls.customerName) }}
+          </span>
+        }
+      </div>
+
+      <div class="field">
+        <label class="field__label" for="customerEmail">E-mail</label>
+        <input
+          id="customerEmail"
+          class="field__input"
+          type="email"
+          formControlName="customerEmail"
+          autocomplete="email"
+          [attr.aria-invalid]="showError(form.controls.customerEmail)"
+          [attr.aria-describedby]="
+            showError(form.controls.customerEmail) ? 'customerEmail-error' : null
+          "
+        />
+        @if (showError(form.controls.customerEmail)) {
+          <span class="field__error" id="customerEmail-error">
+            {{ errorMessage(form.controls.customerEmail) }}
+          </span>
+        }
+      </div>
+    </div>
+  </fieldset>
+
+  <fieldset class="card form-section" formArrayName="items">
+    <legend class="form-section__title">Itens do pedido ({{ items.length }})</legend>
+
+    <div class="item-grid item-grid--header" aria-hidden="true">
+      <span>Descrição</span>
+      <span>Quantidade</span>
+      <span>Preço unitário (R$)</span>
+      <span class="item-row__subtotal">Subtotal</span>
+      <span></span>
+    </div>
+
+    @for (item of items.controls; track item; let index = $index) {
+      <div class="item-grid item-row" [formGroupName]="index">
+        <div class="field">
+          <label class="field__label item-row__label" [for]="'item-' + index + '-description'">
+            Descrição
+          </label>
+          <input
+            class="field__input"
+            type="text"
+            formControlName="description"
+            [id]="'item-' + index + '-description'"
+            [attr.aria-invalid]="showError(item.controls.description)"
+          />
+          @if (showError(item.controls.description)) {
+            <span class="field__error">{{ errorMessage(item.controls.description) }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label item-row__label" [for]="'item-' + index + '-quantity'">
+            Quantidade
+          </label>
+          <input
+            class="field__input"
+            type="number"
+            min="1"
+            step="1"
+            inputmode="numeric"
+            formControlName="quantity"
+            [id]="'item-' + index + '-quantity'"
+            [attr.aria-invalid]="showError(item.controls.quantity)"
+          />
+          @if (showError(item.controls.quantity)) {
+            <span class="field__error">{{ errorMessage(item.controls.quantity) }}</span>
+          }
+        </div>
+
+        <div class="field">
+          <label class="field__label item-row__label" [for]="'item-' + index + '-unitPrice'">
+            Preço unitário (R$)
+          </label>
+          <input
+            class="field__input"
+            type="number"
+            min="0.01"
+            step="0.01"
+            inputmode="decimal"
+            formControlName="unitPrice"
+            [id]="'item-' + index + '-unitPrice'"
+            [attr.aria-invalid]="showError(item.controls.unitPrice)"
+          />
+          @if (showError(item.controls.unitPrice)) {
+            <span class="field__error">{{ errorMessage(item.controls.unitPrice) }}</span>
+          }
+        </div>
+
+        <output class="item-row__subtotal" [attr.aria-label]="'Subtotal do item ' + (index + 1)">
+          {{ lineTotals()[index] | currency }}
+        </output>
+
+        <button
+          type="button"
+          class="btn btn--ghost btn--icon"
+          [disabled]="items.length === 1 || saving()"
+          [attr.aria-label]="'Remover item ' + (index + 1)"
+          (click)="removeItem(index)"
+        >
+          <ng-icon name="lucideTrash2" aria-hidden="true" />
+        </button>
+      </div>
+    }
+
+    <button type="button" class="btn btn--ghost add-item" [disabled]="saving()" (click)="addItem()">
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      Adicionar item
+    </button>
+  </fieldset>
+
+  <footer class="card form-footer">
+    <div class="form-footer__total">
+      <span class="text-muted">Total estimado</span>
+      <strong class="form-footer__amount">{{ estimatedTotal() | currency }}</strong>
+    </div>
+
+    <div class="form-footer__actions">
+      <button type="button" class="btn btn--ghost" [disabled]="saving()" (click)="cancelled.emit()">
+        Cancelar
+      </button>
+      <button type="submit" class="btn btn--primary" [disabled]="saving()">
+        @if (saving()) {
+          <app-spinner size="sm" />
+          Criando pedido…
+        } @else {
+          Criar pedido
+        }
+      </button>
+    </div>
+  </footer>
+</form>

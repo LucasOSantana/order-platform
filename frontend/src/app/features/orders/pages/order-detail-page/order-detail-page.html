@@ -1,0 +1,93 @@
+<section class="page">
+  <a class="back-link" routerLink="/orders">
+    <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+    Voltar para pedidos
+  </a>
+
+  @if (order(); as current) {
+    <header class="page-header">
+      <div>
+        <h1>
+          Pedido <span class="mono">#{{ current.id | slice: 0 : 8 }}</span>
+        </h1>
+        <p class="page-header__subtitle mono">{{ current.id }}</p>
+      </div>
+      <div class="detail-status">
+        <app-order-status-badge [status]="current.status" />
+        @if (isProcessing()) {
+          <app-spinner size="sm" label="Acompanhando processamento…" />
+        }
+      </div>
+    </header>
+
+    @if (error(); as err) {
+      <div class="alert alert--warning" role="alert">
+        <span>Não foi possível atualizar o pedido: {{ err.message }}</span>
+        <button type="button" class="btn btn--ghost btn--sm" (click)="retry()">
+          Tentar novamente
+        </button>
+      </div>
+    }
+
+    @if (current.status === 'FAILED') {
+      <div class="alert alert--error" role="alert">
+        <strong>Falha no processamento.</strong>
+        {{ current.failureReason ?? 'Motivo não informado.' }}
+      </div>
+    }
+
+    <div class="detail-grid">
+      <article class="card detail-card">
+        <h2>Cliente</h2>
+        <dl class="description-list">
+          <dt>Nome</dt>
+          <dd>{{ current.customerName }}</dd>
+          <dt>E-mail</dt>
+          <dd>{{ current.customerEmail }}</dd>
+        </dl>
+      </article>
+
+      <article class="card detail-card">
+        <h2>Resumo</h2>
+        <dl class="description-list">
+          <dt>Total</dt>
+          <dd class="detail-total">{{ current.totalAmount | currency }}</dd>
+          <dt>Criado em</dt>
+          <dd>{{ current.createdAt | date: 'dd/MM/yyyy HH:mm:ss' }}</dd>
+          <dt>Atualizado em</dt>
+          <dd>{{ current.updatedAt | date: 'dd/MM/yyyy HH:mm:ss' }}</dd>
+          <dt>Processado em</dt>
+          <dd>{{ (current.processedAt | date: 'dd/MM/yyyy HH:mm:ss') ?? '—' }}</dd>
+          <dt>Tentativas</dt>
+          <dd>{{ current.attempts }}</dd>
+        </dl>
+      </article>
+    </div>
+
+    <article class="card detail-card">
+      <h2>Itens ({{ current.items.length }})</h2>
+      <app-order-items-table [items]="current.items" [total]="current.totalAmount" />
+    </article>
+
+    <article class="card detail-card">
+      <h2>Histórico de status</h2>
+      <app-order-status-timeline [history]="current.statusHistory" />
+    </article>
+  } @else if (error(); as err) {
+    <div class="card state">
+      @if (err.status === 404) {
+        <p class="state__title">Pedido não encontrado.</p>
+        <p class="text-muted">Verifique o identificador ou volte para a listagem.</p>
+        <a class="btn btn--primary" routerLink="/orders">Ver pedidos</a>
+      } @else {
+        <p class="state__title">Não foi possível carregar o pedido.</p>
+        <p class="text-muted">{{ err.message }}</p>
+        <button type="button" class="btn btn--primary" (click)="retry()">Tentar novamente</button>
+      }
+    </div>
+  } @else if (loading()) {
+    <div class="card state">
+      <app-spinner label="Carregando pedido…" />
+    </div>
+  }
+</section>

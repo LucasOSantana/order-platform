@@ -1,0 +1,19 @@
+<section class="page">
+  <a class="back-link" routerLink="/orders">
+    <ng-icon name="lucideArrowLeft" aria-hidden="true" />
+    Voltar para pedidos
+  </a>
+
+  <header class="page-header">
+    <div>
+      <h1>Novo pedido</h1>
+    </div>
+  </header>
+
+  <app-order-form
+    [saving]="saving()"
+    [serverErrors]="serverErrors()"
+    (submitted)="create($event)"
+    (cancelled)="cancel()"
+  />
+</section>
