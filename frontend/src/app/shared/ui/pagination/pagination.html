@@ -1,0 +1,48 @@
+<div class="pagination__summary">
+  Mostrando <strong>{{ rangeStart() }}–{{ rangeEnd() }}</strong> de
+  <strong>{{ totalElements() }}</strong>
+
+  <label class="pagination__size">
+    <span>por página</span>
+    <select [value]="size()" (change)="onSizeChange($event)">
+      @for (option of pageSizeOptions(); track option) {
+        <option [value]="option" [selected]="option === size()">{{ option }}</option>
+      }
+    </select>
+  </label>
+</div>
+
+<nav class="pagination__pages" aria-label="Paginação">
+  <button
+    type="button"
+    class="btn btn--ghost btn--sm"
+    [disabled]="isFirst()"
+    (click)="goTo(page() - 1)"
+    aria-label="Página anterior"
+  >
+    <ng-icon name="lucideChevronLeft" aria-hidden="true" />
+  </button>
+
+  @for (pageIndex of visiblePages(); track pageIndex) {
+    <button
+      type="button"
+      class="btn btn--sm"
+      [class.btn--primary]="pageIndex === page()"
+      [class.btn--ghost]="pageIndex !== page()"
+      [attr.aria-current]="pageIndex === page() ? 'page' : null"
+      (click)="goTo(pageIndex)"
+    >
+      {{ pageIndex + 1 }}
+    </button>
+  }
+
+  <button
+    type="button"
+    class="btn btn--ghost btn--sm"
+    [disabled]="isLast()"
+    (click)="goTo(page() + 1)"
+    aria-label="Próxima página"
+  >
+    <ng-icon name="lucideChevronRight" aria-hidden="true" />
+  </button>
+</nav>

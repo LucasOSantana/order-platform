@@ -1,0 +1,19 @@
+<div class="toasts" aria-live="polite" aria-atomic="false">
+  @for (notification of notificationService.notifications(); track notification.id) {
+    <div
+      class="toast"
+      [attr.data-kind]="notification.kind"
+      [attr.role]="notification.kind === 'error' ? 'alert' : 'status'"
+    >
+      <span class="toast__message">{{ notification.message }}</span>
+      <button
+        type="button"
+        class="toast__close"
+        aria-label="Fechar notificação"
+        (click)="notificationService.dismiss(notification.id)"
+      >
+        <ng-icon name="lucideX" aria-hidden="true" />
+      </button>
+    </div>
+  }
+</div>

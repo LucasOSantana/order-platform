@@ -1,0 +1,56 @@
+<ng-template #sortHeader let-column>
+  <button type="button" class="sort-button" (click)="toggleSort(column.field)">
+    {{ column.label }}
+    <ng-icon class="sort-button__icon" [name]="sortIcon(column.field)" aria-hidden="true" />
+  </button>
+</ng-template>
+
+<div class="table-wrapper">
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">ID</th>
+        <th scope="col" [attr.aria-sort]="ariaSort('customerName')">
+          <ng-container
+            *ngTemplateOutlet="sortHeader; context: { $implicit: columns.customerName }"
+          />
+        </th>
+        <th scope="col" [attr.aria-sort]="ariaSort('status')">
+          <ng-container *ngTemplateOutlet="sortHeader; context: { $implicit: columns.status }" />
+        </th>
+        <th scope="col" class="table__numeric">Itens</th>
+        <th scope="col" class="table__numeric" [attr.aria-sort]="ariaSort('totalAmount')">
+          <ng-container
+            *ngTemplateOutlet="sortHeader; context: { $implicit: columns.totalAmount }"
+          />
+        </th>
+        <th scope="col" [attr.aria-sort]="ariaSort('createdAt')">
+          <ng-container *ngTemplateOutlet="sortHeader; context: { $implicit: columns.createdAt }" />
+        </th>
+        <th scope="col"><span class="visually-hidden">Ações</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (order of orders(); track order.id) {
+        <tr>
+          <td>
+            <a class="mono" [routerLink]="order.id">#{{ order.id | slice: 0 : 8 }}</a>
+          </td>
+          <td>
+            <div class="customer">
+              <span>{{ order.customerName }}</span>
+              <small class="text-muted">{{ order.customerEmail }}</small>
+            </div>
+          </td>
+          <td><app-order-status-badge [status]="order.status" /></td>
+          <td class="table__numeric">{{ order.itemCount }}</td>
+          <td class="table__numeric">{{ order.totalAmount | currency }}</td>
+          <td>{{ order.createdAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+          <td class="table__actions">
+            <a class="btn btn--ghost btn--sm" [routerLink]="order.id">Ver detalhes</a>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

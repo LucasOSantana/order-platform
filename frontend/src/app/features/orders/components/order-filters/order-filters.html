@@ -1,0 +1,39 @@
+<form class="filters card" [formGroup]="form" (ngSubmit)="apply()" novalidate>
+  <div class="field">
+    <label class="field__label" for="filter-status">Status</label>
+    <select id="filter-status" class="field__input" formControlName="status">
+      <option value="">Todos</option>
+      @for (option of statusOptions; track option.value) {
+        <option [value]="option.value">{{ option.label }}</option>
+      }
+    </select>
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="filter-from">Criado de</label>
+    <input id="filter-from" class="field__input" type="date" formControlName="createdFrom" />
+  </div>
+
+  <div class="field">
+    <label class="field__label" for="filter-to">Criado até</label>
+    <input
+      id="filter-to"
+      class="field__input"
+      type="date"
+      formControlName="createdTo"
+      [attr.aria-invalid]="form.hasError('dateRange')"
+      [attr.aria-describedby]="form.hasError('dateRange') ? 'filter-date-error' : null"
+    />
+  </div>
+
+  <div class="filters__actions">
+    <button type="submit" class="btn btn--primary">Filtrar</button>
+    <button type="button" class="btn btn--ghost" (click)="clear()">Limpar</button>
+  </div>
+
+  @if (form.hasError('dateRange')) {
+    <p class="field__error filters__error" id="filter-date-error">
+      A data inicial deve ser anterior ou igual à data final.
+    </p>
+  }
+</form>

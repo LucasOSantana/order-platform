@@ -1,0 +1,29 @@
+.sort-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+.sort-button__icon {
+  --ng-icon__size: 0.9rem;
+  opacity: 0.7;
+}
+
+.customer {
+  display: flex;
+  flex-direction: column;
+}
+
+.table__actions {
+  text-align: right;
+}

@@ -1,0 +1,25 @@
+.list-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 2rem;
+  font-size: 0.875rem;
+}
+
+.list-card {
+  position: relative;
+  overflow: hidden;
+
+  &.is-busy > :not(.list-card__overlay) {
+    opacity: 0.5;
+  }
+}
+
+.list-card__overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}

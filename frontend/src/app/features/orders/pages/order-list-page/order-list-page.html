@@ -1,0 +1,90 @@
+<section class="page">
+  <header class="page-header">
+    <div>
+      <h1>Pedidos</h1>
+    </div>
+    <a class="btn btn--primary" routerLink="new">
+      <ng-icon name="lucidePlus" aria-hidden="true" />
+      Novo pedido
+    </a>
+  </header>
+
+  <app-order-filters [filters]="filters()" (filtersChange)="onFiltersChange($event)" />
+
+  <div class="list-toolbar">
+    <span class="text-muted" aria-live="polite">
+      @if (refreshing()) {
+        <app-spinner size="sm" label="Atualizando…" />
+      } @else if (lastUpdatedAt(); as updatedAt) {
+        Atualizado às {{ updatedAt | date: 'HH:mm:ss' }} · atualização automática a cada
+        {{ pollingSeconds }}s
+      }
+    </span>
+    <button
+      type="button"
+      class="btn btn--ghost btn--sm"
+      [disabled]="loading() || refreshing()"
+      (click)="refresh()"
+    >
+      <ng-icon name="lucideRefreshCw" aria-hidden="true" />
+      Atualizar
+    </button>
+  </div>
+
+  @if (error(); as message) {
+    <div class="alert alert--error" role="alert">
+      <span>{{ message }}</span>
+      <button type="button" class="btn btn--ghost btn--sm" (click)="refresh()">
+        Tentar novamente
+      </button>
+    </div>
+  }
+
+  <div class="card list-card" [class.is-busy]="loading() && result()" [attr.aria-busy]="loading()">
+    @if (result(); as page) {
+      @if (page.content.length > 0) {
+        <app-order-table
+          [orders]="page.content"
+          [sort]="query().sort"
+          (sortChange)="onSortChange($event)"
+        />
+        <app-pagination
+          [page]="page.page.number"
+          [size]="page.page.size"
+          [totalElements]="page.page.totalElements"
+          [totalPages]="page.page.totalPages"
+          [pageSizeOptions]="pageSizeOptions"
+          (pageChange)="onPageChange($event)"
+          (sizeChange)="onSizeChange($event)"
+        />
+      } @else {
+        <div class="state">
+          @if (page.page.totalElements > 0) {
+            <p class="state__title">Esta página não existe mais.</p>
+            <button type="button" class="btn btn--ghost" (click)="goToFirstPage()">
+              Ir para a primeira página
+            </button>
+          } @else if (hasActiveFilters()) {
+            <p class="state__title">Nenhum pedido encontrado com esses filtros.</p>
+            <button type="button" class="btn btn--ghost" (click)="clearFilters()">
+              Limpar filtros
+            </button>
+          } @else {
+            <p class="state__title">Nenhum pedido cadastrado ainda.</p>
+            <a class="btn btn--primary" routerLink="new">Criar o primeiro pedido</a>
+          }
+        </div>
+      }
+    } @else if (loading()) {
+      <div class="state">
+        <app-spinner label="Carregando pedidos…" />
+      </div>
+    }
+
+    @if (loading() && result()) {
+      <div class="list-card__overlay">
+        <app-spinner label="Carregando…" />
+      </div>
+    }
+  </div>
+</section>
