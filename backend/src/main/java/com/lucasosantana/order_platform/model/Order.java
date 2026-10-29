@@ -96,4 +96,33 @@ public class Order {
 		itemCount = items.size();
 	}
 
+	public boolean isFinished() {
+		return status == OrderStatus.COMPLETED || status == OrderStatus.FAILED;
+	}
+
+	public void startAttempt(Instant now) {
+		if (status == OrderStatus.RECEIVED) {
+			changeStatus(OrderStatus.PROCESSING, null, now);
+		}
+		attempts++;
+		updatedAt = now;
+	}
+
+	public void complete(Instant now) {
+		changeStatus(OrderStatus.COMPLETED, null, now);
+		processedAt = now;
+	}
+
+	public void fail(String reason, Instant now) {
+		changeStatus(OrderStatus.FAILED, reason, now);
+		failureReason = reason;
+		processedAt = now;
+	}
+
+	private void changeStatus(OrderStatus newStatus, String reason, Instant now) {
+		statusHistory.add(new OrderStatusHistory(this, status, newStatus, reason, now));
+		status = newStatus;
+		updatedAt = now;
+	}
+
 }
