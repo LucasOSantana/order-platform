@@ -25,10 +25,13 @@ import com.lucasosantana.order_platform.dto.OrderSummaryResponse;
 import com.lucasosantana.order_platform.model.OrderStatus;
 import com.lucasosantana.order_platform.service.OrderService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/orders")
+@Tag(name = "Pedidos")
 public class OrderController {
 
 	private final OrderService orderService;
@@ -38,6 +41,7 @@ public class OrderController {
 	}
 
 	@GetMapping
+	@Operation(summary = "Lista pedidos com paginação, ordenação e filtros")
 	public PagedModel<OrderSummaryResponse> list(
 			@RequestParam(required = false) OrderStatus status,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdFrom,
@@ -48,6 +52,9 @@ public class OrderController {
 	}
 
 	@PostMapping
+	@Operation(summary = "Cria um pedido",
+			description = "O pedido é criado em RECEIVED e processado de forma "
+					+ "assíncrona. Consulte GET /api/orders/{id} para acompanhar o status.")
 	public ResponseEntity<OrderResponse> create(@Valid @RequestBody CreateOrderRequest request) {
 		var order = orderService.create(request);
 		var location = ServletUriComponentsBuilder.fromCurrentRequest()
@@ -58,6 +65,7 @@ public class OrderController {
 	}
 
 	@GetMapping("/{id}")
+	@Operation(summary = "Consulta os detalhes de um pedido", description = "Inclui itens e histórico de status.")
 	public OrderResponse getById(@PathVariable UUID id) {
 		return orderService.getById(id);
 	}
