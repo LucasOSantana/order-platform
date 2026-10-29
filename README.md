@@ -1,6 +1,6 @@
 # Orderly
 
-![Orderly - Listagem](frontend\public\orderly.png)
+![Orderly - Listagem](frontend/public/orderly.png)
 
 ---
 
