@@ -237,9 +237,12 @@ Todos os erros seguem o formato **ProblemDetail**, com `Content-Type: applicatio
 
 | Código | Quando acontece |
 |---|---|
-| 400 | Corpo inválido, campo com valor inválido, status ou data mal formatados, data inicial depois da final, ordenação por campo não permitido |
-| 404 | Pedido não encontrado |
+| 400 | Corpo inválido, campo com valor inválido, status ou data mal formatados, data inicial depois da final, ordenação por campo não permitido, total do pedido acima de R$ 999.999.999.999,99 |
+| 404 | Pedido ou rota não encontrados |
+| 405 | Método HTTP não suportado no endpoint |
+| 415 | Corpo enviado em formato diferente de `application/json` |
 | 500 | Erro inesperado (o detalhe fica só no log do backend) |
+| 503 | Banco de dados indisponível no momento |
 
 ---
 

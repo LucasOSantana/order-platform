@@ -1,5 +1,6 @@
 package com.lucasosantana.order_platform.service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
@@ -34,6 +35,7 @@ import com.lucasosantana.order_platform.repository.OrderSpecifications;
 public class OrderService {
 
 	static final List<String> SORTABLE_FIELDS = List.of("createdAt", "customerName", "status", "totalAmount");
+	static final BigDecimal MAX_TOTAL_AMOUNT = new BigDecimal("999999999999.99");
 
 	private static final Logger log = LoggerFactory.getLogger(OrderService.class);
 
@@ -80,6 +82,10 @@ public class OrderService {
 						item.quantity(),
 						item.unitPrice())
 					);
+		if (order.getTotalAmount().compareTo(MAX_TOTAL_AMOUNT) > 0) {
+			throw new InvalidRequestException(
+					"O valor total do pedido excede o máximo permitido de R$ 999.999.999.999,99.");
+		}
 
 		orderRepository.save(order);
 		outboxRepository.save(new OrderOutbox(order.getId(), now));

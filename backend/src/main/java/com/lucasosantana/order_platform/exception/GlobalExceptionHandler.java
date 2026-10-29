@@ -5,18 +5,23 @@ import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
+import org.springframework.dao.DataAccessResourceFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.transaction.CannotCreateTransactionException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
@@ -31,6 +36,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 	@ExceptionHandler(InvalidRequestException.class)
 	ProblemDetail handleInvalidRequest(InvalidRequestException ex) {
 		return problem(HttpStatus.BAD_REQUEST, "Requisição inválida", ex.getMessage());
+	}
+
+	@ExceptionHandler({ CannotCreateTransactionException.class, DataAccessResourceFailureException.class })
+	ProblemDetail handleDatabaseUnavailable(Exception ex) {
+		log.error("Banco de dados indisponível", ex);
+		return problem(HttpStatus.SERVICE_UNAVAILABLE, "Serviço indisponível",
+				"Serviço temporariamente indisponível. Tente novamente em instantes.");
 	}
 
 	@ExceptionHandler(Exception.class)
@@ -68,6 +80,29 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 		var body = problem(HttpStatus.BAD_REQUEST, "Requisição inválida",
 				"O corpo da requisição não é um JSON válido ou tem campos com tipo errado.");
 		return handleExceptionInternal(ex, body, headers, HttpStatus.BAD_REQUEST, request);
+	}
+
+	@Override
+	protected ResponseEntity<Object> handleNoResourceFoundException(
+			NoResourceFoundException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+		var body = problem(HttpStatus.NOT_FOUND, "Recurso não encontrado", "O recurso solicitado não existe.");
+		return handleExceptionInternal(ex, body, headers, HttpStatus.NOT_FOUND, request);
+	}
+
+	@Override
+	protected ResponseEntity<Object> handleHttpRequestMethodNotSupported(
+			HttpRequestMethodNotSupportedException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+		var body = problem(HttpStatus.METHOD_NOT_ALLOWED, "Método não suportado",
+				"Método %s não suportado neste endpoint.".formatted(ex.getMethod()));
+		return handleExceptionInternal(ex, body, headers, HttpStatus.METHOD_NOT_ALLOWED, request);
+	}
+
+	@Override
+	protected ResponseEntity<Object> handleHttpMediaTypeNotSupported(
+			HttpMediaTypeNotSupportedException ex, HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+		var body = problem(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Formato não suportado",
+				"O corpo da requisição deve ser enviado como application/json.");
+		return handleExceptionInternal(ex, body, headers, HttpStatus.UNSUPPORTED_MEDIA_TYPE, request);
 	}
 
 	private static ProblemDetail problem(HttpStatus status, String title, String detail) {
