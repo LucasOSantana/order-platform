@@ -1,4 +1,8 @@
-# Order Platform
+# Orderly
+
+![Orderly - Listagem](frontend\public\orderly.png)
+
+---
 
 Aplicação full stack para cadastrar, consultar e acompanhar pedidos, com o **processamento feito de forma assíncrona** via RabbitMQ.
 

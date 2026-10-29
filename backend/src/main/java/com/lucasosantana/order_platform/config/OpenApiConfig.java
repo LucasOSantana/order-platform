@@ -12,7 +12,7 @@ public class OpenApiConfig {
 	@Bean
 	OpenAPI orderPlatformOpenApi() {
 		return new OpenAPI().info(new Info()
-				.title("Order Platform API")
+				.title("Orderly API")
 				.version("v1")
 				.description("""
 						Cadastro assíncrono e consulta de pedidos."""));
