@@ -47,11 +47,11 @@ docker compose up --build
 O comando:
 
 1. constrói as imagens do backend (Maven dentro do container) e do frontend (Node dentro do container);
-2. sobe o PostgreSQL e o RabbitMQ e espera os dois ficarem saudáveis (health check);
+2. sobe o PostgreSQL e o RabbitMQ e espera os dois ficarem saudáveis;
 3. sobe o backend, que aplica as migrations do banco e cria as filas, exchanges e bindings no RabbitMQ;
 4. sobe o frontend quando o backend fica saudável.
 
-Não é necessário nenhum passo manual: o banco, as tabelas e as filas são criados automaticamente. O arquivo `.env` é opcional, pois todas as variáveis têm valores padrão no `compose.yaml`.
+Não é necessário nenhum passo manual: o banco, as tabelas e as filas são criados automaticamente. O arquivo `.env` é opcional, pois todas as variáveis têm valores padrão de testes no `compose.yaml`.
 
 A primeira execução demora alguns minutos por causa do download das dependências. Quando os quatro serviços aparecerem como `healthy` em `docker compose ps`, a aplicação está pronta em **http://localhost:4200**.
 
@@ -63,14 +63,13 @@ A primeira execução demora alguns minutos por causa do download das dependênc
 |---|---|---|---|
 | Frontend | http://localhost:4200 | 4200 | Interface web |
 | API | http://localhost:4040/api/orders | 4040 | Também acessível pelo frontend em http://localhost:4200/api/orders |
-| Swagger UI | http://localhost:4040/swagger-ui.html | 4040 | Também em http://localhost:4200/swagger-ui.html |
-| OpenAPI (JSON) | http://localhost:4040/v3/api-docs | 4040 | |
+| Swagger UI | http://localhost:4040/swagger-ui.html | 4040 | |
 | Health check | http://localhost:4040/actuator/health | 4040 | Mostra o estado do banco e do RabbitMQ |
 | RabbitMQ (painel) | http://localhost:13030 | 13030 | Para ver as filas e a DLQ |
 | RabbitMQ (AMQP) | `localhost:3030` | 3030 | |
 | PostgreSQL | `localhost:2020` | 2020 | Banco `orders` |
 
-**Credenciais de desenvolvimento** (valores padrão, podem ser trocados pelo `.env`):
+**Credenciais de desenvolvimento** (valores padrão, podem ser trocados pelo `.env` antes de buildar o projeto):
 
 | Serviço | Usuário | Senha |
 |---|---|---|
@@ -105,14 +104,14 @@ Os dados do PostgreSQL e do RabbitMQ ficam em volumes Docker (`postgres-data` e 
 ### Gerenciamento de pedidos
 
 - **Criar pedido** com nome do cliente, e-mail e uma lista de itens (descrição, quantidade e preço unitário).
-- **O valor total é calculado pelo backend.** Qualquer total enviado pelo cliente é ignorado; o servidor calcula o subtotal de cada item e soma.
+- **O valor total é calculado pelo backend.** Qualquer total enviado pelo cliente é ignorado, o servidor calcula o subtotal de cada item e soma.
 - **Consultar um pedido** pelo identificador, com itens, histórico de status, número de tentativas e motivo da falha (quando houver).
 - **Listar pedidos** com paginação e ordenação por data de criação, cliente, status ou valor total.
 - **Filtrar** por status e por período de criação (data inicial e final, ambas inclusivas).
 
 ### Processamento assíncrono
 
-- Ao ser criado, o pedido é gravado no PostgreSQL e uma mensagem é publicada no RabbitMQ. A requisição HTTP **não espera** o processamento.
+- Ao ser criado, o pedido é gravado no PostgreSQL e uma mensagem é publicada no RabbitMQ. A requisição HTTP não espera o processamento.
 - Um consumidor lê a mensagem, muda o pedido para `PROCESSING`, executa uma validação de negócio simulada com tempo configurável e finaliza em `COMPLETED` ou `FAILED`.
 - **Falhas de negócio** (pedido recusado) levam o pedido a `FAILED` com o motivo, sem novas tentativas.
 - **Falhas técnicas** (erros inesperados) são reprocessadas automaticamente com intervalo crescente entre tentativas. Se todas falharem, o pedido vai para `FAILED` e a mensagem vai para a **Dead Letter Queue (DLQ)**.
@@ -178,7 +177,7 @@ Regras de validação:
 |---|---|
 | `customerName` | obrigatório, até 150 caracteres |
 | `customerEmail` | obrigatório, e-mail válido, até 254 caracteres |
-| `items` | de 1 a 100 itens |
+| `items` | mainímo 1, máximo 100 itens |
 | `items[].description` | obrigatório, até 255 caracteres |
 | `items[].quantity` | obrigatório, mínimo 1 |
 | `items[].unitPrice` | obrigatório, não negativo, até 7 dígitos inteiros e 2 casas decimais |
@@ -219,7 +218,7 @@ Resposta:
 
 ### Erros
 
-Todos os erros seguem o formato **ProblemDetail** (RFC 9457), com `Content-Type: application/problem+json`. Erros de validação trazem a lista `errors` com o campo e a mensagem:
+Todos os erros seguem o formato **ProblemDetail**, com `Content-Type: application/problem+json`. Erros de validação trazem a lista `errors` com o campo e a mensagem:
 
 ```json
 {
@@ -255,12 +254,12 @@ flowchart LR
         mq[["rabbitmq<br/>:3030 / :13030"]]
     end
 
-    front -- "/api, /swagger-ui<br/>(proxy reverso)" --> back
+    front -- "/api<br/>(proxy reverso)" --> back
     back -- "JPA / Flyway" --> db
     back -- "publica e consome<br/>mensagens" --> mq
 ```
 
-O navegador fala apenas com o nginx do frontend. O nginx repassa `/api` e `/swagger-ui` para o backend usando o nome do serviço (`backend:4040`), então não há problema de CORS. Dentro da rede do Docker, o backend acessa `postgres:5432` e `rabbitmq:5672` pelos nomes dos serviços.
+O navegador fala apenas com o nginx do frontend. O nginx repassa `/api` para o backend usando o nome do serviço (`backend:4040`), então não há problema de CORS. Dentro da rede do Docker, o backend acessa `postgres:5432` e `rabbitmq:5672` pelos nomes dos serviços.
 
 ### Filas no RabbitMQ
 
@@ -388,7 +387,7 @@ order-platform/
 
 ### Backend (`backend/src/main/java/com/lucasosantana/order_platform`)
 
-Organizado em camadas, como pede o desafio (Controller, Service, Repository e Model), com alguns pacotes de apoio:
+Organizado em camadas, com alguns pacotes de apoio:
 
 | Pacote | Responsabilidade |
 |---|---|
@@ -402,7 +401,7 @@ Organizado em camadas, como pede o desafio (Controller, Service, Repository e Mo
 | `config` | Configurações: topologia do RabbitMQ, CORS, agendamento e OpenAPI. |
 | `exception` | Exceções da aplicação e o `GlobalExceptionHandler`, que transforma tudo em ProblemDetail. |
 
-Os pacotes `dto`, `mapper`, `messaging`, `config` e `exception` vão além das quatro camadas mínimas. Eles existem para que nenhuma camada precise conhecer detalhes que não são dela: o controller não conhece entidades, o service não conhece o RabbitMQ diretamente (ele só grava no outbox) e o consumidor não conhece HTTP.
+Os pacotes `dto`, `mapper`, `messaging`, `config` e `exception` existem para que nenhuma camada precise conhecer detalhes que não são dela: o controller não conhece entidades, o service não conhece o RabbitMQ diretamente (ele só grava no outbox) e o consumidor não conhece HTTP.
 
 ### Frontend (`frontend/src/app`)
 
@@ -413,7 +412,7 @@ Organizado por funcionalidade, seguindo as convenções do Angular:
 | `core/` | Itens usados pela aplicação inteira: tratamento de erros HTTP (`api-error.ts`), URL base da API e o serviço de notificações (toasts). |
 | `shared/` | Peças reutilizáveis sem regra de negócio: paginação, spinner, validadores de formulário e o tipo `Page`. |
 | `features/orders/models/` | Interfaces e tipos que representam os contratos da API (`Order`, `OrderSummary`, `CreateOrderRequest`...) e os parâmetros da listagem. |
-| `features/orders/data-access/` | Comunicação com a API. `OrdersApi` é o contrato; `http/` é a implementação com `HttpClient` e `mock/` uma implementação em memória usada no desenvolvimento antes do backend existir. |
+| `features/orders/data-access/` | Comunicação com a API. `OrdersApi` é o contrato; `http/` é a implementação com `HttpClient` e `mock/` uma implementação em memória para testar a aplicação sem backend. |
 | `features/orders/pages/` | Telas (listagem, criação e detalhes). Cuidam de carregar dados, polling, navegação e feedback. |
 | `features/orders/components/` | Componentes de apresentação (tabela, filtros, formulário, badge de status, linha do tempo). Recebem dados por `input()` e avisam ações por `output()`, sem chamar a API. |
 | `features/orders/utils/` | Funções puras, como o cálculo do total estimado mostrado no formulário. |
@@ -445,7 +444,6 @@ Todas as configurações têm valores padrão adequados para rodar localmente. P
 | `ORDER_PROCESSING_DELAY` | `3000ms` | Tempo de cada tentativa de processamento |
 | `ORDER_PROCESSING_MAX_RETRIES` | `2` | Novas tentativas após a primeira (2 = 3 tentativas no total) |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` | Origens permitidas para chamar a API diretamente |
-| `JAVA_OPTS` | `-XX:MaxRAMPercentage=75 ...` | Opções da JVM |
 
 Exemplo de `.env`:
 
@@ -575,11 +573,7 @@ Como a paginação é feita no banco, a ordenação também precisa ser. Ordenar
 
 ### Erros padronizados
 
-Todos os erros seguem o ProblemDetail (RFC 9457), com mensagens em português. Erros de validação trazem o caminho do campo (por exemplo `items[0].quantity`), que o formulário usa para marcar o campo certo.
-
-### Polling no frontend
-
-O enunciado permite polling, e ele é simples e suficiente aqui: a listagem atualiza a cada 5s e a tela de detalhes a cada 3s, parando quando o pedido termina. WebSocket ou Server-Sent Events trariam mais complexidade sem ganho real para o desafio.
+Todos os erros seguem o ProblemDetail, com mensagens em português. Erros de validação trazem o caminho do campo (por exemplo `items[0].quantity`), que o formulário usa para marcar o campo certo.
 
 ### Frontend com contrato da API e implementação trocável
 
@@ -587,7 +581,7 @@ As telas dependem só da classe abstrata `OrdersApi`. Isso permitiu construir e 
 
 ### Proxy reverso no nginx
 
-O frontend em produção é servido pelo nginx, que também repassa `/api` e `/swagger-ui` para o backend. O navegador fala com uma única origem, o que evita CORS e esconde a porta do backend.
+O frontend é servido pelo nginx, que também repassa `/api` e `/swagger-ui` para o backend. O navegador fala com uma única origem, o que evita CORS e esconde a porta do backend.
 
 ---
 
@@ -595,22 +589,14 @@ O frontend em produção é servido pelo nginx, que também repassa `/api` e `/s
 
 ### Limitações
 
-- **Ordenação por status é alfabética** (`COMPLETED`, `FAILED`, `PROCESSING`, `RECEIVED`), não segue o ciclo do pedido.
 - **Paginação por offset:** cada página faz um `count(*)` para calcular o total. Com milhões de registros isso ficaria lento.
 - **Processamento simulado:** a validação de negócio usa regras fixas (palavras-chave e valor máximo) apenas para demonstrar os cenários.
-- **Sem autenticação:** qualquer pessoa com acesso à API pode criar e consultar pedidos.
 - **Mensagens na DLQ não são reprocessadas automaticamente:** ficam na fila para análise manual.
-- **Registros publicados do outbox não são apagados:** a tabela cresce com o tempo.
-- **Se o banco estiver fora do ar no fim das tentativas**, a mensagem vai para a DLQ, mas o pedido não consegue ser marcado como `FAILED` e fica em `PROCESSING`.
 
 ### Possíveis evoluções
 
-- Ordenar o status pelo ciclo do pedido.
 - Paginação por cursor (*keyset pagination*) para grandes volumes.
 - Índices para ordenação por cliente e por valor.
-- Atualização em tempo real com Server-Sent Events, no lugar do polling.
-- Autenticação e autorização (por exemplo, OAuth2 / JWT).
+- Atualização em tempo real, no lugar do polling.
 - Tela ou endpoint para reprocessar mensagens da DLQ.
-- Limpeza periódica dos registros já publicados do outbox.
-- Métricas e rastreamento distribuído (Micrometer, Prometheus, OpenTelemetry), com o `orderId` em todos os logs.
 - Testes end-to-end do frontend (por exemplo, Playwright).
