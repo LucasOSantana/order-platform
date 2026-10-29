@@ -1,6 +1,6 @@
 # Orderly
 
-![Orderly - Listagem](frontend/public/orderly.png)
+![Orderly - Listagem](docs/orderly.png)
 
 ---
 
@@ -181,7 +181,7 @@ Regras de validação:
 |---|---|
 | `customerName` | obrigatório, até 150 caracteres |
 | `customerEmail` | obrigatório, e-mail válido, até 254 caracteres |
-| `items` | mainímo 1, máximo 100 itens |
+| `items` | mínimo 1, máximo 100 itens |
 | `items[].description` | obrigatório, até 255 caracteres |
 | `items[].quantity` | obrigatório, mínimo 1 |
 | `items[].unitPrice` | obrigatório, não negativo, até 7 dígitos inteiros e 2 casas decimais |
@@ -385,6 +385,7 @@ Também existem `CHECK`s para os status válidos e para valores não negativos, 
 ```
 order-platform/
 ├── compose.yaml          # Orquestra os 4 serviços
+├── docs/                 # Imagem do README
 ├── backend/              # Spring Boot
 └── frontend/             # Angular + nginx
 ```
